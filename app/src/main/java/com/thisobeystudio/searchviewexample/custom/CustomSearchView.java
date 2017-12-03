@@ -57,7 +57,8 @@ public class CustomSearchView {
      */
     public void showCustomSearchView(final Context context,
                                      final SearchView.OnQueryTextListener onQueryTextListener,
-                                     final ConstraintLayout parent) {
+                                     final ConstraintLayout parent,
+                                     final String query) {
 
         if (context == null
                 || onQueryTextListener == null
@@ -74,7 +75,7 @@ public class CustomSearchView {
 
             setParentConstraintLayout(parent);
 
-            setupFloatingMenuFrameLayout(context);
+            setupFloatingMenuFrameLayout(context, query);
             setCancelableOnTouchOutside();
 
             switch (getSelection()) {
@@ -96,7 +97,7 @@ public class CustomSearchView {
     /**
      * @param context context
      */
-    private void setupFloatingMenuFrameLayout(final Context context) {
+    private void setupFloatingMenuFrameLayout(final Context context, final String query) {
 
         if (context == null) return;
 
@@ -138,6 +139,9 @@ public class CustomSearchView {
                 }
             }
         });
+        
+        if (getSearchView() != null)
+            getSearchView().setQuery(query, false);
 
     }
 

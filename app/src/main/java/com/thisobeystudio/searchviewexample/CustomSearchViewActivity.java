@@ -65,6 +65,11 @@ public class CustomSearchViewActivity extends AppCompatActivity
         SearchDataAsync searchDataAsync = new SearchDataAsync();
         searchDataAsync.delegate = this;
         searchDataAsync.execute(query);
+
+        if (mCustomSearchView.isVisible() && mCustomSearchView.isCancelable()) {
+            mCustomSearchView.removeCustomSearchView();
+        }
+
         return false;
     }
 
@@ -81,7 +86,18 @@ public class CustomSearchViewActivity extends AppCompatActivity
         mCustomSearchView.setSelection(selection);
         setSearchResultsByQuery(getQuery());
         if (mAdapter != null) mAdapter.swapData(getSearchResults());
-        mCustomSearchView.getSearchView().setQuery(getQuery(), true);
+        mCustomSearchView.getSearchView().setQuery(getQuery(), false);  // set true if wants it to submit on item click
+    }
+
+    @Override
+    public void searchDataAsyncDoInBackground(String params) {
+        setQuery(params);
+        setSearchResultsByQuery(getQuery());
+    }
+
+    @Override
+    public void searchDataAsyncOnPostExecute() {
+        if (mAdapter != null) mAdapter.swapData(getSearchResults());
     }
 
     private void setQuery(String query) {
@@ -150,7 +166,8 @@ public class CustomSearchViewActivity extends AppCompatActivity
         mCustomSearchView.showCustomSearchView(
                 CustomSearchViewActivity.this,
                 CustomSearchViewActivity.this,
-                mParent);
+                mParent,
+                getQuery());
 
         mCustomSearchView.setSearchItemCallbacks(CustomSearchViewActivity.this);
     }
@@ -219,17 +236,6 @@ public class CustomSearchViewActivity extends AppCompatActivity
         } else {
             mCustomSearchTextView.setText(getString(R.string.type_your_keyword_here));
         }
-    }
-
-    @Override
-    public void searchDataAsyncDoInBackground(String params) {
-        setQuery(params);
-        setSearchResultsByQuery(getQuery());
-    }
-
-    @Override
-    public void searchDataAsyncOnPostExecute() {
-        if (mAdapter != null) mAdapter.swapData(getSearchResults());
     }
 
 }
