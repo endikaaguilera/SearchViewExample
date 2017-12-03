@@ -133,8 +133,11 @@ public class CustomSearchViewActivity extends AppCompatActivity
                 stringArray = getResources().getStringArray(R.array.days);
                 break;
             case CustomSearchView.selectionMonths:
-            default:
                 stringArray = getResources().getStringArray(R.array.months);
+                break;
+            case CustomSearchView.selectionCountries:
+            default:
+                stringArray = getResources().getStringArray(R.array.countries);
                 break;
         }
 
@@ -169,7 +172,9 @@ public class CustomSearchViewActivity extends AppCompatActivity
                 mParent,
                 getQuery());
 
+        // set callbacks
         mCustomSearchView.setSearchItemCallbacks(CustomSearchViewActivity.this);
+
     }
 
     private void setupSearchRecyclerView() {

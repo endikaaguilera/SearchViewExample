@@ -1,7 +1,11 @@
 package com.thisobeystudio.searchviewexample.custom;
 
 import android.content.Context;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.support.constraint.ConstraintLayout;
+import android.support.transition.TransitionManager;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,37 +23,24 @@ import com.thisobeystudio.searchviewexample.R;
 
 public class CustomSearchView {
 
+    //private final String TAG = FloatingMenu.class.getSimpleName();
+
     public final static int selectionDays = 1;
     public final static int selectionMonths = 2;
+    public final static int selectionCountries = 3;
 
     private int mSelection = CustomSearchView.selectionDays;
 
-    //private final String TAG = FloatingMenu.class.getSimpleName();
+    // Search Item onClick callbacks
     public interface SearchItemCallbacks {
-        @SuppressWarnings("unused")
         void onSearchItemCallbacks(int selection);
     }
 
-    // menu item onclick callbacks
+    // Search Item onClick callbacks
     private SearchItemCallbacks mSearchItemsItemCallbacks;
 
-    public void setSearchItemCallbacks(SearchItemCallbacks mCallbacks) {
-        this.mSearchItemsItemCallbacks = mCallbacks;
-    }
-
-    private SearchItemCallbacks getSearchItemsItemCallbacks() {
-        return mSearchItemsItemCallbacks;
-    }
-
+    // Search View query listener
     private SearchView.OnQueryTextListener mOnQueryTextListener;
-
-    private SearchView.OnQueryTextListener getOnQueryTextListener() {
-        return mOnQueryTextListener;
-    }
-
-    private void setOnQueryTextListener(SearchView.OnQueryTextListener onQueryTextListener) {
-        this.mOnQueryTextListener = onQueryTextListener;
-    }
 
     /**
      * @param context context
@@ -60,14 +51,15 @@ public class CustomSearchView {
                                      final ConstraintLayout parent,
                                      final String query) {
 
-        if (context == null
-                || onQueryTextListener == null
-                || parent == null) {
+        if (context == null || onQueryTextListener == null || parent == null) {
             setVisible(false);
             return;
         }
 
         if (!isVisible()) {
+
+            // this makes show Custom SearchView looks better, not instant
+            TransitionManager.beginDelayedTransition(parent);
 
             setVisible(true);
 
@@ -75,19 +67,20 @@ public class CustomSearchView {
 
             setParentConstraintLayout(parent);
 
-            setupFloatingMenuFrameLayout(context, query);
+            setupFloatingSearchViewFrameLayout(context, query);
             setCancelableOnTouchOutside();
+
+            final int accent = ContextCompat.getColor(context, R.color.colorAccent);
 
             switch (getSelection()) {
                 case CustomSearchView.selectionDays:
-                    getDaysTextView()
-                            .setTextColor(ContextCompat.getColor(context, R.color.colorAccent));
+                    setTextViewColors(getDaysTextView(), accent);
                     break;
                 case CustomSearchView.selectionMonths:
-                    getMonthsTextView()
-                            .setTextColor(ContextCompat.getColor(context, R.color.colorAccent));
+                    setTextViewColors(getMonthsTextView(), accent);
                     break;
-                default:
+                case CustomSearchView.selectionCountries:
+                    setTextViewColors(getCountriesTextView(), accent);
                     break;
             }
         }
@@ -97,7 +90,7 @@ public class CustomSearchView {
     /**
      * @param context context
      */
-    private void setupFloatingMenuFrameLayout(final Context context, final String query) {
+    private void setupFloatingSearchViewFrameLayout(final Context context, final String query) {
 
         if (context == null) return;
 
@@ -115,6 +108,10 @@ public class CustomSearchView {
 
         setDaysTextView((TextView) frameLayout.findViewById(R.id.days_text_view));
         setMonthsTextView((TextView) frameLayout.findViewById(R.id.months_text_view));
+        setCountriesTextView((TextView) frameLayout.findViewById(R.id.countries_text_view));
+
+        final int accent = ContextCompat.getColor(context, R.color.colorAccent);
+        final int gray = ContextCompat.getColor(context, android.R.color.darker_gray);
 
         getDaysTextView().setOnClickListener(new View.OnClickListener() {
             @Override
@@ -122,8 +119,9 @@ public class CustomSearchView {
 
                 if (getSearchItemsItemCallbacks() != null) {
                     getSearchItemsItemCallbacks().onSearchItemCallbacks(selectionDays);
-                    getDaysTextView().setTextColor(ContextCompat.getColor(context, R.color.colorAccent));
-                    getMonthsTextView().setTextColor(ContextCompat.getColor(context, android.R.color.darker_gray));
+                    setTextViewColors(getDaysTextView(), accent);
+                    setTextViewColors(getMonthsTextView(), gray);
+                    setTextViewColors(getCountriesTextView(), gray);
                 }
             }
         });
@@ -134,27 +132,69 @@ public class CustomSearchView {
 
                 if (getSearchItemsItemCallbacks() != null) {
                     getSearchItemsItemCallbacks().onSearchItemCallbacks(selectionMonths);
-                    getDaysTextView().setTextColor(ContextCompat.getColor(context, android.R.color.darker_gray));
-                    getMonthsTextView().setTextColor(ContextCompat.getColor(context, R.color.colorAccent));
+                    setTextViewColors(getDaysTextView(), gray);
+                    setTextViewColors(getMonthsTextView(), accent);
+                    setTextViewColors(getCountriesTextView(), gray);
                 }
             }
         });
-        
+
+        getCountriesTextView().setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (getSearchItemsItemCallbacks() != null) {
+                    getSearchItemsItemCallbacks().onSearchItemCallbacks(selectionCountries);
+                    setTextViewColors(getDaysTextView(), gray);
+                    setTextViewColors(getMonthsTextView(), gray);
+                    setTextViewColors(getCountriesTextView(), accent);
+                }
+            }
+        });
+
         if (getSearchView() != null)
             getSearchView().setQuery(query, false);
 
     }
 
+    private void setTextViewColors(TextView textView, int color) {
+        textView.setTextColor(color);
+        for (Drawable drawable : textView.getCompoundDrawables()) {
+            if (drawable != null) {
+                drawable.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
+            }
+        }
+    }
+
+    /**
+     * Search View
+     */
     private SearchView mSearchView;
 
+    /**
+     * @return Search View
+     */
     public SearchView getSearchView() {
         return mSearchView;
     }
 
+    /**
+     * @param searchView Search View
+     */
     private void setSearchView(SearchView searchView) {
         this.mSearchView = searchView;
     }
 
+    /**
+     * Setup SearchView.
+     * <br><br>Actions:
+     * <br><br><code>setActivated(true)</code>
+     * <br><code>setQueryHint("Type your keyword here")</code>
+     * <br><code>onActionViewExpanded()</code>
+     * <br><code>setIconified(false)</code>
+     * <br><code>clearFocus()</code>
+     * <br><code>setOnQueryTextListener(getOnQueryTextListener())</code>
+     */
     private void setupSearchView() {
 
         getSearchView().setActivated(true);
@@ -168,40 +208,61 @@ public class CustomSearchView {
         getSearchView().setOnQueryTextListener(getOnQueryTextListener());
     }
 
+    /**
+     * Days TextView
+     */
     private TextView mDaysTextView;
 
+    /**
+     * @param daysTextView Days TextView
+     */
     private void setDaysTextView(TextView daysTextView) {
         this.mDaysTextView = daysTextView;
     }
 
+    /**
+     * @return Days TextView
+     */
     private TextView getDaysTextView() {
         return mDaysTextView;
     }
 
+    /**
+     * Months TextView
+     */
     private TextView mMonthsTextView;
 
+    /**
+     * @param monthsTextView Months TextView
+     */
     private void setMonthsTextView(TextView monthsTextView) {
         this.mMonthsTextView = monthsTextView;
     }
 
+    /**
+     * @return Months TextView
+     */
     private TextView getMonthsTextView() {
         return mMonthsTextView;
     }
 
     /**
-     * set Cancelable On Touch Outside
+     * Countries TextView
      */
-    private void setCancelableOnTouchOutside() {
+    private TextView mCountriesTextView;
 
-        if (isCancelableOnTouchOutside()) {
-            getFrameLayout().setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    removeCustomSearchView();
-                }
-            });
-        }
+    /**
+     * @param countriesTextView Countries TextView
+     */
+    private void setCountriesTextView(TextView countriesTextView) {
+        this.mCountriesTextView = countriesTextView;
+    }
 
+    /**
+     * @return Countries TextView
+     */
+    private TextView getCountriesTextView() {
+        return mCountriesTextView;
     }
 
     /**
@@ -217,7 +278,7 @@ public class CustomSearchView {
     }
 
     /**
-     * @param visible menu visibility
+     * @param visible visibility
      */
     private void setVisible(boolean visible) {
         isVisible = visible;
@@ -261,12 +322,18 @@ public class CustomSearchView {
         this.mFrameLayout = frameLayout;
     }
 
-
     /**
      * remove CustomSearchView and update visibility
      */
     public void removeCustomSearchView() {
-        if (getParentConstraintLayout() == null || getFrameLayout() == null) return;
+
+        // this makes remove Custom SearchView looks better, not instant
+        TransitionManager.beginDelayedTransition(getParentConstraintLayout());
+
+        if (getParentConstraintLayout() == null ||
+                getFrameLayout() == null ||
+                getSearchView() == null)
+            return;
 
         if (getSearchView().hasFocus())
             getSearchView().clearFocus();
@@ -316,17 +383,74 @@ public class CustomSearchView {
     /**
      * @return cancelable On Touch Outside
      */
-    @SuppressWarnings("WeakerAccess")
-    public boolean isCancelableOnTouchOutside() {
+    private boolean isCancelableOnTouchOutside() {
         return isCancelableOnTouchOutside;
     }
 
+    /**
+     * set Cancelable On Touch Outside
+     */
+    private void setCancelableOnTouchOutside() {
+
+        if (isCancelableOnTouchOutside()) {
+            getFrameLayout().setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    removeCustomSearchView();
+                }
+            });
+        }
+
+    }
+
+    /**
+     * determines query filter >>> days or months
+     *
+     * @return current selection
+     */
     public int getSelection() {
         return mSelection;
     }
 
+    /**
+     * in this case determines query filter >>> days or months
+     *
+     * @param selection filter selection
+     */
     public void setSelection(int selection) {
         mSelection = selection;
+    }
+
+    /**
+     * {@link SearchItemCallbacks}
+     *
+     * @param mCallbacks Search Item Callbacks
+     */
+    public void setSearchItemCallbacks(SearchItemCallbacks mCallbacks) {
+        this.mSearchItemsItemCallbacks = mCallbacks;
+    }
+
+    /**
+     * {@link SearchItemCallbacks}
+     *
+     * @return Search Item Callbacks
+     */
+    private SearchItemCallbacks getSearchItemsItemCallbacks() {
+        return mSearchItemsItemCallbacks;
+    }
+
+    /**
+     * @param onQueryTextListener SearchView OnQueryTextListener
+     */
+    private void setOnQueryTextListener(SearchView.OnQueryTextListener onQueryTextListener) {
+        this.mOnQueryTextListener = onQueryTextListener;
+    }
+
+    /**
+     * @return SearchView OnQueryTextListener
+     */
+    private SearchView.OnQueryTextListener getOnQueryTextListener() {
+        return mOnQueryTextListener;
     }
 
 }

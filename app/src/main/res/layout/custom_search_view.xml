@@ -69,6 +69,27 @@
                 android:textColor="@android:color/darker_gray"
                 android:textSize="18sp" />
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray" />
+
+            <TextView
+                android:id="@+id/countries_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:drawablePadding="12dp"
+                android:drawableStart="@android:drawable/ic_menu_mapmode"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:padding="6dp"
+                android:text="@string/countries"
+                android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="18sp" />
+
         </LinearLayout>
 
     </android.support.v7.widget.CardView>
