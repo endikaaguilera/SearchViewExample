@@ -70,7 +70,7 @@ public class SimpleSearchViewActivity extends AppCompatActivity
         mSearchView.onActionViewExpanded();
         mSearchView.setIconified(false);
 
-        mSearchView.clearFocus();
+        //mSearchView.clearFocus();
 
         // set query listener
         mSearchView.setOnQueryTextListener(this);

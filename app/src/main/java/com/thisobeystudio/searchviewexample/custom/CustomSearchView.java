@@ -192,17 +192,13 @@ public class CustomSearchView {
      * <br><code>setQueryHint("Type your keyword here")</code>
      * <br><code>onActionViewExpanded()</code>
      * <br><code>setIconified(false)</code>
-     * <br><code>clearFocus()</code>
      * <br><code>setOnQueryTextListener(getOnQueryTextListener())</code>
      */
     private void setupSearchView() {
-
         getSearchView().setActivated(true);
         getSearchView().setQueryHint("Type your keyword here");
         getSearchView().onActionViewExpanded();
         getSearchView().setIconified(false);
-
-        getSearchView().clearFocus();
 
         // set query listener
         getSearchView().setOnQueryTextListener(getOnQueryTextListener());
