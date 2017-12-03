@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">Search View Example</string>
+    <string name="days">Days</string>
+    <string name="months">Months</string>
+    <string name="custom_search">Custom Search</string>
+    <string name="simple_search">Simple Search</string>
+    <string name="type_your_keyword_here">Type your keyword here</string>
+
+    <array name="days">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </array>
+
+    <array name="months">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </array>
+
+</resources>
