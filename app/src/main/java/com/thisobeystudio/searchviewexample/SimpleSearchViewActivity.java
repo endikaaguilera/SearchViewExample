@@ -19,12 +19,17 @@ import java.util.Arrays;
 public class SimpleSearchViewActivity extends AppCompatActivity
         implements SearchView.OnQueryTextListener, SearchDataAsyncResponse {
 
+    // SearchView
     private SearchView mSearchView;
+    // Data container RecyclerView
     private RecyclerView mRecyclerView;
 
+    // RecyclerView Adapter
     private SearchRecyclerViewAdapter mAdapter;
 
-    private ArrayList<String> mMonths;
+    // Demo data
+    private ArrayList<String> mData;
+    // Search results data
     private ArrayList<String> mSearchResults;
 
     @Override
@@ -32,19 +37,19 @@ public class SimpleSearchViewActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simple_search);
 
-        setMonths();
+        setData();
 
         setupSearchView();
         setupSearchRecyclerView();
 
     }
 
-    private ArrayList<String> getMonths() {
-        return mMonths;
+    private ArrayList<String> getData() {
+        return mData;
     }
 
-    private void setMonths(ArrayList<String> months) {
-        this.mMonths = months;
+    private void setData(ArrayList<String> data) {
+        this.mData = data;
     }
 
     private ArrayList<String> getSearchResults() {
@@ -55,9 +60,9 @@ public class SimpleSearchViewActivity extends AppCompatActivity
         this.mSearchResults = mSearchResults;
     }
 
-    private void setMonths() {
-        String[] monthsArray = getResources().getStringArray(R.array.months);
-        setMonths(new ArrayList<>(Arrays.asList(monthsArray)));
+    private void setData() {
+        String[] monthsArray = getResources().getStringArray(R.array.countries);
+        setData(new ArrayList<>(Arrays.asList(monthsArray)));
     }
 
     private void setupSearchView() {
@@ -66,7 +71,7 @@ public class SimpleSearchViewActivity extends AppCompatActivity
             mSearchView = findViewById(R.id.search_view);
 
         mSearchView.setActivated(true);
-        mSearchView.setQueryHint("Type your keyword here");
+        mSearchView.setQueryHint(getString(R.string.query_hint));
         mSearchView.onActionViewExpanded();
         mSearchView.setIconified(false);
 
@@ -93,7 +98,7 @@ public class SimpleSearchViewActivity extends AppCompatActivity
         mRecyclerView.setNestedScrollingEnabled(false);
 
         // specify an adapter
-        mAdapter = new SearchRecyclerViewAdapter(this, getMonths());
+        mAdapter = new SearchRecyclerViewAdapter(this, getData());
 
         // set recyclerView adapter
         mRecyclerView.setAdapter(mAdapter);
@@ -112,7 +117,7 @@ public class SimpleSearchViewActivity extends AppCompatActivity
 
         if (TextUtils.isEmpty(query) && mAdapter != null) {
             //mAdapter.swapData(null);
-            mAdapter.swapData(getMonths());
+            mAdapter.swapData(getData());
         } else {
             SearchDataAsync searchDataAsync = new SearchDataAsync();
             searchDataAsync.delegate = this;
@@ -126,7 +131,7 @@ public class SimpleSearchViewActivity extends AppCompatActivity
 
         if (TextUtils.isEmpty(newText) && mAdapter != null) {
             //mAdapter.swapData(null);
-            mAdapter.swapData(getMonths());
+            mAdapter.swapData(getData());
         } else {
             SearchDataAsync searchDataAsync = new SearchDataAsync();
             searchDataAsync.delegate = this;
@@ -145,37 +150,22 @@ public class SimpleSearchViewActivity extends AppCompatActivity
         if (mAdapter != null) mAdapter.swapData(getSearchResults());
     }
 
+    // filter results
     private void setSearchResultsByQuery(String query) {
 
-        if (getMonths() != null && getMonths().size() > 0) {
+        if (getData() != null && getData().size() > 0) {
 
             setSearchResults(new ArrayList<String>());
 
-            for (int i = 0; i < getMonths().size(); i++) {
+            for (int i = 0; i < getData().size(); i++) {
                 // notice that is checking contains and toLowerCased
-                if (getMonths().get(i).toLowerCase().contains(query.toLowerCase())) {
-                    String month = getMonths().get(i);
+                if (getData().get(i).toLowerCase().contains(query.toLowerCase())) {
+                    String month = getData().get(i);
                     getSearchResults().add(month);
                 }
             }
 
         }
     }
-
-    /*
-    private void setOnQueryListener() {
-        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return false;
-            }
-        });
-    }
-    */
 
 }

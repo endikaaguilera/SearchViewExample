@@ -104,7 +104,7 @@ public class CustomSearchView {
         getParentConstraintLayout().addView(getFrameLayout());
 
         setSearchView((SearchView) frameLayout.findViewById(R.id.custom_search_view));
-        setupSearchView();
+        setupSearchView(context);
 
         setDaysTextView((TextView) frameLayout.findViewById(R.id.days_text_view));
         setMonthsTextView((TextView) frameLayout.findViewById(R.id.months_text_view));
@@ -174,6 +174,7 @@ public class CustomSearchView {
     /**
      * @return Search View
      */
+    @SuppressWarnings("WeakerAccess")
     public SearchView getSearchView() {
         return mSearchView;
     }
@@ -194,9 +195,11 @@ public class CustomSearchView {
      * <br><code>setIconified(false)</code>
      * <br><code>setOnQueryTextListener(getOnQueryTextListener())</code>
      */
-    private void setupSearchView() {
+    private void setupSearchView(Context context) {
+        if (context == null) return;
+
         getSearchView().setActivated(true);
-        getSearchView().setQueryHint("Type your keyword here");
+        getSearchView().setQueryHint(context.getString(R.string.query_hint));
         getSearchView().onActionViewExpanded();
         getSearchView().setIconified(false);
 
