@@ -1,6 +1,7 @@
 package com.thisobeystudio.searchviewexample.adapters;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,10 +10,10 @@ import android.widget.TextView;
 
 import com.thisobeystudio.searchviewexample.R;
 
-import java.util.ArrayList;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
+
+import static com.thisobeystudio.searchviewexample.db.DemoContract.PROJECTION_INDEX;
 
 /**
  * Created by thisobeystudio on 3/12/17.
@@ -20,13 +21,13 @@ import butterknife.ButterKnife;
  * Contact: thisobeystudio@gmail.com
  */
 
-public class SearchRecyclerViewAdapter extends
-        RecyclerView.Adapter<SearchRecyclerViewAdapter.SearchViewHolder> {
+public class DBSearchRecyclerViewAdapter extends
+        RecyclerView.Adapter<DBSearchRecyclerViewAdapter.SearchViewHolder> {
 
     //private final String TAG = getClass().getSimpleName();
 
     private final Context mContext;
-    private ArrayList<String> mSearchResults;
+    private Cursor mData;
 
     class SearchViewHolder extends RecyclerView.ViewHolder {
 
@@ -39,18 +40,19 @@ public class SearchRecyclerViewAdapter extends
         }
     }
 
-    public SearchRecyclerViewAdapter(Context context, ArrayList<String> results) {
+    public DBSearchRecyclerViewAdapter(Context context, Cursor data) {
         this.mContext = context;
-        this.mSearchResults = results;
+        this.mData = data;
     }
 
     @Override
     public int getItemCount() {
         if (this.mContext == null
-                || this.mSearchResults == null
-                || mSearchResults.size() <= 0) {
+                || mData == null
+                || mData.getCount() <= 0
+                || !mData.moveToFirst()) {
             return 0;
-        } else return mSearchResults.size();
+        } else return mData.getCount();
     }
 
     @Override
@@ -64,19 +66,19 @@ public class SearchRecyclerViewAdapter extends
     public void onBindViewHolder(final SearchViewHolder viewHolder, int i) {
 
         if (this.mContext == null
-                || this.mSearchResults == null
-                || i >= mSearchResults.size()
-                || mSearchResults.size() <= 0) {
+                || mData == null) {
             return;
         }
 
-        final String title = mSearchResults.get(i);
+        mData.moveToPosition(i);
+
+        final String title = mData.getString(PROJECTION_INDEX);
         viewHolder.recyclerViewItem.setText(title);
 
     }
 
-    public void swapData(ArrayList<String> newResults) {
-        mSearchResults = newResults;
+    public void swapData(Cursor newResults) {
+        mData = newResults;
         notifyDataSetChanged();
     }
 }

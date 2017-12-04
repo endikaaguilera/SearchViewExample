@@ -21,6 +21,14 @@
 
         <activity android:name=".SimpleSearchViewActivity" />
         <activity android:name=".CustomSearchViewActivity" />
+        <activity android:name=".DBCustomSearchViewActivity" />
+
+        <!-- [START ContentProvider] -->
+        <provider
+            android:name=".db.DemoDataProvider"
+            android:authorities="@string/content_authority"
+            android:exported="false" />
+        <!-- [END ContentProvider] -->
 
     </application>
 

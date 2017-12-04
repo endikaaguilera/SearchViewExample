@@ -16,13 +16,20 @@ import com.thisobeystudio.searchviewexample.async.SearchDataAsyncResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class SimpleSearchViewActivity extends AppCompatActivity
         implements SearchView.OnQueryTextListener, SearchDataAsyncResponse {
 
     // SearchView
-    private SearchView mSearchView;
+    @SuppressWarnings("WeakerAccess")
+    @BindView(R.id.search_view)
+    SearchView mSearchView;
     // Data container RecyclerView
-    private RecyclerView mRecyclerView;
+    @SuppressWarnings("WeakerAccess")
+    @BindView(R.id.recycler_view)
+    RecyclerView mRecyclerView;
 
     // RecyclerView Adapter
     private SearchRecyclerViewAdapter mAdapter;
@@ -36,6 +43,10 @@ public class SimpleSearchViewActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simple_search);
+
+        ButterKnife.bind(this);
+
+        setTitle(getClass().getSimpleName());
 
         setData();
 
@@ -67,9 +78,6 @@ public class SimpleSearchViewActivity extends AppCompatActivity
 
     private void setupSearchView() {
 
-        if (mSearchView == null)
-            mSearchView = findViewById(R.id.search_view);
-
         mSearchView.setActivated(true);
         mSearchView.setQueryHint(getString(R.string.query_hint));
         mSearchView.onActionViewExpanded();
@@ -82,9 +90,6 @@ public class SimpleSearchViewActivity extends AppCompatActivity
     }
 
     private void setupSearchRecyclerView() {
-
-        if (mRecyclerView == null)
-            mRecyclerView = findViewById(R.id.recycler_view);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView

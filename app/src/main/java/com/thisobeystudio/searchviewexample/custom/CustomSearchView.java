@@ -1,12 +1,10 @@
 package com.thisobeystudio.searchviewexample.custom;
 
 import android.content.Context;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
+import android.content.res.ColorStateList;
 import android.support.constraint.ConstraintLayout;
-import android.support.transition.TransitionManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -28,11 +26,15 @@ public class CustomSearchView {
     public final static int selectionDays = 1;
     public final static int selectionMonths = 2;
     public final static int selectionCountries = 3;
+    private int mSelection = 0; // means no selection
 
-    private int mSelection = CustomSearchView.selectionDays;
+    private int mDefaultColor;
+    private int mAccentColor;
+
 
     // Search Item onClick callbacks
     public interface SearchItemCallbacks {
+        @SuppressWarnings("unused")
         void onSearchItemCallbacks(int selection);
     }
 
@@ -56,10 +58,10 @@ public class CustomSearchView {
             return;
         }
 
-        if (!isVisible()) {
+        mDefaultColor = ContextCompat.getColor(context, android.R.color.darker_gray);
+        mAccentColor = ContextCompat.getColor(context, R.color.colorAccent);
 
-            // this makes show Custom SearchView looks better, not instant
-            TransitionManager.beginDelayedTransition(parent);
+        if (!isVisible()) {
 
             setVisible(true);
 
@@ -67,22 +69,14 @@ public class CustomSearchView {
 
             setParentConstraintLayout(parent);
 
-            setupFloatingSearchViewFrameLayout(context, query);
+            setupFloatingSearchView(context, query);
+
+            // Set initial Selection if has not been set.
+            if (getSelection() == 0) setSelection(CustomSearchView.selectionCountries);
+            else setSelection(getSelection());
+
             setCancelableOnTouchOutside();
 
-            final int accent = ContextCompat.getColor(context, R.color.colorAccent);
-
-            switch (getSelection()) {
-                case CustomSearchView.selectionDays:
-                    setTextViewColors(getDaysTextView(), accent);
-                    break;
-                case CustomSearchView.selectionMonths:
-                    setTextViewColors(getMonthsTextView(), accent);
-                    break;
-                case CustomSearchView.selectionCountries:
-                    setTextViewColors(getCountriesTextView(), accent);
-                    break;
-            }
         }
 
     }
@@ -90,7 +84,7 @@ public class CustomSearchView {
     /**
      * @param context context
      */
-    private void setupFloatingSearchViewFrameLayout(final Context context, final String query) {
+    private void setupFloatingSearchView(final Context context, final String query) {
 
         if (context == null) return;
 
@@ -110,18 +104,16 @@ public class CustomSearchView {
         setMonthsTextView((TextView) frameLayout.findViewById(R.id.months_text_view));
         setCountriesTextView((TextView) frameLayout.findViewById(R.id.countries_text_view));
 
-        final int accent = ContextCompat.getColor(context, R.color.colorAccent);
-        final int gray = ContextCompat.getColor(context, android.R.color.darker_gray);
+        setTextViewWithCompoundDrawable(getDaysTextView(), android.R.drawable.ic_menu_day);
+        setTextViewWithCompoundDrawable(getMonthsTextView(), android.R.drawable.ic_menu_month);
+        setTextViewWithCompoundDrawable(getCountriesTextView(), android.R.drawable.ic_menu_mapmode);
 
         getDaysTextView().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                setSelection(selectionDays);
                 if (getSearchItemsItemCallbacks() != null) {
                     getSearchItemsItemCallbacks().onSearchItemCallbacks(selectionDays);
-                    setTextViewColors(getDaysTextView(), accent);
-                    setTextViewColors(getMonthsTextView(), gray);
-                    setTextViewColors(getCountriesTextView(), gray);
                 }
             }
         });
@@ -129,12 +121,9 @@ public class CustomSearchView {
         getMonthsTextView().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                setSelection(selectionMonths);
                 if (getSearchItemsItemCallbacks() != null) {
                     getSearchItemsItemCallbacks().onSearchItemCallbacks(selectionMonths);
-                    setTextViewColors(getDaysTextView(), gray);
-                    setTextViewColors(getMonthsTextView(), accent);
-                    setTextViewColors(getCountriesTextView(), gray);
                 }
             }
         });
@@ -142,12 +131,9 @@ public class CustomSearchView {
         getCountriesTextView().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                setSelection(selectionCountries);
                 if (getSearchItemsItemCallbacks() != null) {
                     getSearchItemsItemCallbacks().onSearchItemCallbacks(selectionCountries);
-                    setTextViewColors(getDaysTextView(), gray);
-                    setTextViewColors(getMonthsTextView(), gray);
-                    setTextViewColors(getCountriesTextView(), accent);
                 }
             }
         });
@@ -157,13 +143,23 @@ public class CustomSearchView {
 
     }
 
-    private void setTextViewColors(TextView textView, int color) {
-        textView.setTextColor(color);
-        for (Drawable drawable : textView.getCompoundDrawables()) {
-            if (drawable != null) {
-                drawable.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
-            }
-        }
+    /**
+     * @param textView    target text view
+     * @param drawableRes compound drawable resource icon
+     */
+    private void setTextViewWithCompoundDrawable(TextView textView, int drawableRes) {
+        textView.setTextColor(getColorStateList());
+        int noDrawable = 0;
+        // set menu item icon
+        textView.setCompoundDrawablesWithIntrinsicBounds(
+                drawableRes,                        // left
+                noDrawable,                         // top
+                noDrawable,                         // right
+                noDrawable);                        // bottom
+
+        final int drawablePosition = 0; // left = 0, top = 1, right = 2, bottom = 3
+        DrawableCompat.setTintList(
+                textView.getCompoundDrawables()[drawablePosition], getColorStateList());
     }
 
     /**
@@ -213,10 +209,10 @@ public class CustomSearchView {
     private TextView mDaysTextView;
 
     /**
-     * @param daysTextView Days TextView
+     * @param mDaysTextView Days TextView
      */
-    private void setDaysTextView(TextView daysTextView) {
-        this.mDaysTextView = daysTextView;
+    private void setDaysTextView(TextView mDaysTextView) {
+        this.mDaysTextView = mDaysTextView;
     }
 
     /**
@@ -232,10 +228,10 @@ public class CustomSearchView {
     private TextView mMonthsTextView;
 
     /**
-     * @param monthsTextView Months TextView
+     * @param mMonthsTextView Months TextView
      */
-    private void setMonthsTextView(TextView monthsTextView) {
-        this.mMonthsTextView = monthsTextView;
+    private void setMonthsTextView(TextView mMonthsTextView) {
+        this.mMonthsTextView = mMonthsTextView;
     }
 
     /**
@@ -251,10 +247,10 @@ public class CustomSearchView {
     private TextView mCountriesTextView;
 
     /**
-     * @param countriesTextView Countries TextView
+     * @param mCountriesTextView Countries TextView
      */
-    private void setCountriesTextView(TextView countriesTextView) {
-        this.mCountriesTextView = countriesTextView;
+    private void setCountriesTextView(TextView mCountriesTextView) {
+        this.mCountriesTextView = mCountriesTextView;
     }
 
     /**
@@ -325,9 +321,6 @@ public class CustomSearchView {
      * remove CustomSearchView and update visibility
      */
     public void removeCustomSearchView() {
-
-        // this makes remove Custom SearchView looks better, not instant
-        TransitionManager.beginDelayedTransition(getParentConstraintLayout());
 
         if (getParentConstraintLayout() == null ||
                 getFrameLayout() == null ||
@@ -417,7 +410,32 @@ public class CustomSearchView {
      * @param selection filter selection
      */
     public void setSelection(int selection) {
+
         mSelection = selection;
+
+        if (getDaysTextView() == null ||
+                getMonthsTextView() == null ||
+                getCountriesTextView() == null)
+            return;
+
+        switch (getSelection()) {
+            case CustomSearchView.selectionDays:
+                getDaysTextView().setSelected(true);
+                getMonthsTextView().setSelected(false);
+                getCountriesTextView().setSelected(false);
+                break;
+            case CustomSearchView.selectionMonths:
+                getDaysTextView().setSelected(false);
+                getMonthsTextView().setSelected(true);
+                getCountriesTextView().setSelected(false);
+                break;
+            case CustomSearchView.selectionCountries:
+                getDaysTextView().setSelected(false);
+                getMonthsTextView().setSelected(false);
+                getCountriesTextView().setSelected(true);
+                break;
+        }
+
     }
 
     /**
@@ -450,6 +468,18 @@ public class CustomSearchView {
      */
     private SearchView.OnQueryTextListener getOnQueryTextListener() {
         return mOnQueryTextListener;
+    }
+
+    private ColorStateList getColorStateList() {
+        return new ColorStateList(
+                new int[][]{
+                        new int[]{android.R.attr.state_selected},       // Selected Color
+                        new int[]{}                                     // Default
+                },
+                new int[]{
+                        mAccentColor,
+                        mDefaultColor
+                });
     }
 
 }

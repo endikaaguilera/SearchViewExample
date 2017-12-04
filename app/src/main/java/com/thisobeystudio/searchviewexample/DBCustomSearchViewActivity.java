@@ -1,7 +1,11 @@
 package com.thisobeystudio.searchviewexample;
 
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -10,22 +14,32 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.SearchView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.thisobeystudio.searchviewexample.adapters.SearchRecyclerViewAdapter;
-import com.thisobeystudio.searchviewexample.async.SearchDataAsync;
-import com.thisobeystudio.searchviewexample.async.SearchDataAsyncResponse;
+import com.thisobeystudio.searchviewexample.adapters.DBSearchRecyclerViewAdapter;
 import com.thisobeystudio.searchviewexample.custom.CustomSearchView;
-
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.thisobeystudio.searchviewexample.db.DemoContract;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class CustomSearchViewActivity extends AppCompatActivity
-        implements SearchView.OnQueryTextListener, SearchDataAsyncResponse,
-        CustomSearchView.SearchItemCallbacks {
+import static com.thisobeystudio.searchviewexample.db.DemoContract.DataEntry.COUNTRIES_COLUMN_COUNTRY_DATA;
+import static com.thisobeystudio.searchviewexample.db.DemoContract.DataEntry.DAYS_COLUMN_DAY_DATA;
+import static com.thisobeystudio.searchviewexample.db.DemoContract.DataEntry.MONTHS_COLUMN_MONTH_DATA;
+
+/**
+ * Created by thisobeystudio on 4/12/17.
+ * Copyright: (c) 2017 ThisObey Studio
+ * Contact: thisobeystudio@gmail.com
+ */
+
+public class DBCustomSearchViewActivity extends AppCompatActivity
+        implements SearchView.OnQueryTextListener,
+        CustomSearchView.SearchItemCallbacks,
+        android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor> {
+
+    private final int DAYS_LOADER_ID = 1111;
+    private final int MONTHS_LOADER_ID = 2222;
+    private final int COUNTRIES_LOADER_ID = 3333;
 
     // This TextView is a 'fake' SearchView
     // Handle clicks to show Custom SearchView
@@ -39,17 +53,15 @@ public class CustomSearchViewActivity extends AppCompatActivity
     RecyclerView mRecyclerView;
 
     // RecyclerView Adapter
-    private SearchRecyclerViewAdapter mAdapter;
+    private DBSearchRecyclerViewAdapter mAdapter;
 
     // Parent ConstraintLayout will be used as Custom SearchView parent
     @SuppressWarnings("WeakerAccess")
     @BindView(R.id.custom_search_view_parent)
     ConstraintLayout mParent;
 
-    // Demo data
-    private ArrayList<String> mData;
     // Search results data
-    private ArrayList<String> mSearchResults;
+    private Cursor mData;
 
     // Custom SearchView
     private final CustomSearchView mCustomSearchView = new CustomSearchView();
@@ -57,9 +69,12 @@ public class CustomSearchViewActivity extends AppCompatActivity
     // Search query
     private String mQuery;
 
+    private int mLoaderID = COUNTRIES_LOADER_ID;
+
     private final String BUNDLE_DATA_QUERY = "data_query";
     private final String BUNDLE_DATA_SEARCH_SELECTION = "data_search_selection";
     private final String BUNDLE_DATA_SEARCH_VIEW_VISIBLE = "data_search_view_visible";
+    private final String BUNDLE_DATA_LOADER_ID = "data_loader_id";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,23 +85,35 @@ public class CustomSearchViewActivity extends AppCompatActivity
 
         setTitle(getClass().getSimpleName());
 
-        // Set Data
-        setData();
-
         // Setup views
         setupCustomSearchTextView();
         setupSearchRecyclerView();
 
+        switch (mCustomSearchView.getSelection()) {
+            case CustomSearchView.selectionDays:
+                mLoaderID = DAYS_LOADER_ID;
+                break;
+            case CustomSearchView.selectionMonths:
+                mLoaderID = MONTHS_LOADER_ID;
+                break;
+            case CustomSearchView.selectionCountries:
+                mLoaderID = COUNTRIES_LOADER_ID;
+                break;
+        }
+
         if (savedInstanceState != null
                 && savedInstanceState.containsKey(BUNDLE_DATA_QUERY)
                 && savedInstanceState.containsKey(BUNDLE_DATA_SEARCH_SELECTION)
-                && savedInstanceState.containsKey(BUNDLE_DATA_SEARCH_VIEW_VISIBLE)) {
+                && savedInstanceState.containsKey(BUNDLE_DATA_SEARCH_VIEW_VISIBLE)
+                && savedInstanceState.containsKey(BUNDLE_DATA_LOADER_ID)) {
 
             setQuery(savedInstanceState.getString(BUNDLE_DATA_QUERY));
 
             mCustomSearchView.setSelection(
                     savedInstanceState.getInt(BUNDLE_DATA_SEARCH_SELECTION,
                             CustomSearchView.selectionCountries));
+
+            mLoaderID = savedInstanceState.getInt(BUNDLE_DATA_LOADER_ID, COUNTRIES_LOADER_ID);
 
             boolean isVisible = savedInstanceState.getBoolean(BUNDLE_DATA_SEARCH_VIEW_VISIBLE);
 
@@ -95,11 +122,11 @@ public class CustomSearchViewActivity extends AppCompatActivity
             }
 
             mCustomSearchTextView.setText(getQuery());
-            SearchDataAsync searchDataAsync = new SearchDataAsync();
-            searchDataAsync.delegate = this;
-            searchDataAsync.execute(getQuery());
+
         }
 
+        getSupportLoaderManager().initLoader(mLoaderID,
+                null, DBCustomSearchViewActivity.this);
     }
 
     @Override
@@ -108,6 +135,7 @@ public class CustomSearchViewActivity extends AppCompatActivity
         outState.putString(BUNDLE_DATA_QUERY, getQuery());
         outState.putInt(BUNDLE_DATA_SEARCH_SELECTION, mCustomSearchView.getSelection());
         outState.putBoolean(BUNDLE_DATA_SEARCH_VIEW_VISIBLE, mCustomSearchView.isVisible());
+        outState.putInt(BUNDLE_DATA_LOADER_ID, mLoaderID);
 
         super.onSaveInstanceState(outState);
     }
@@ -124,54 +152,101 @@ public class CustomSearchViewActivity extends AppCompatActivity
 
     @Override
     public boolean onQueryTextSubmit(String query) {
-        // Execute Search query async
-        SearchDataAsync searchDataAsync = new SearchDataAsync();
-        searchDataAsync.delegate = this;
-        searchDataAsync.execute(query);
-
+        setQuery(query);
+        restartLoaderBySelection();
         // Check is Custom SearchView is present
         if (mCustomSearchView.isVisible() && mCustomSearchView.isCancelable()) {
             mCustomSearchView.removeCustomSearchView();
         }
-
         return false;
     }
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        // Execute Search newText async
-        SearchDataAsync searchDataAsync = new SearchDataAsync();
-        searchDataAsync.delegate = this;
-        searchDataAsync.execute(newText);
+        setQuery(newText);
+        restartLoaderBySelection();
         return false;
     }
 
     @Override
     public void onSearchItemCallbacks(int selection) {
-        // Update results  query
-        setSearchResultsByQuery(getQuery());
-
-        // swap RecyclerView data
-        if (mAdapter != null) mAdapter.swapData(getSearchResults());
-
-        // Update 'fake' SearchView text
-        updateCustomSearchTextView();
+        restartLoaderBySelection();
     }
 
     @Override
-    public void searchDataAsyncDoInBackground(String params) {
-        // Update query
-        setQuery(params);
-        // Update results data
-        setSearchResultsByQuery(getQuery());
+    public Loader<Cursor> onCreateLoader(int loaderId, Bundle args) {
+
+        Uri uri;
+        String[] projection;
+        String selection;
+
+        if (loaderId == DAYS_LOADER_ID) {
+            uri = DemoContract.DataEntry.CONTENT_URI_DAYS;
+            projection = DemoContract.DAYS_PROJECTION;
+            selection = DAYS_COLUMN_DAY_DATA + " like '%" + getQuery() + "%'";
+        } else if (loaderId == MONTHS_LOADER_ID) {
+            uri = DemoContract.DataEntry.CONTENT_URI_MONTHS;
+            projection = DemoContract.MONTHS_PROJECTION;
+            selection = MONTHS_COLUMN_MONTH_DATA + " like '%" + getQuery() + "%'";
+        } else if (loaderId == COUNTRIES_LOADER_ID) {
+            uri = DemoContract.DataEntry.CONTENT_URI_COUNTRIES;
+            projection = DemoContract.COUNTRIES_PROJECTION;
+            selection = COUNTRIES_COLUMN_COUNTRY_DATA + " like '%" + getQuery() + "%'";
+        } else {
+            throw new RuntimeException("Loader Not Implemented: " + loaderId);
+        }
+
+        if (TextUtils.isEmpty(getQuery())) {
+            selection = null;
+        }
+
+        return new CursorLoader(this, uri, projection, selection, null, null);
     }
 
     @Override
-    public void searchDataAsyncOnPostExecute() {
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
+        boolean cursorHasValidData = false;
+        if (data != null && data.moveToFirst()) {
+            /* We have valid data, continue on to bind the data to the UI */
+            cursorHasValidData = true;
+        }
+        if (!cursorHasValidData) {
+            /* No data to display, simply return and do nothing */
+            if (mAdapter != null) mAdapter.swapData(null);
+            setData(null);
+            return;
+        }
+
+        setData(data);
         // Update RecyclerView data
-        if (mAdapter != null) mAdapter.swapData(getSearchResults());
+        if (mAdapter != null) mAdapter.swapData(getData());
         // Update 'fake' SearchView text
         updateCustomSearchTextView();
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        if (mAdapter != null) mAdapter.swapData(null);
+        setData(null);
+    }
+
+    private void restartLoaderBySelection() {
+
+        switch (mCustomSearchView.getSelection()) {
+            case CustomSearchView.selectionDays:
+                mLoaderID = DAYS_LOADER_ID;
+                break;
+            case CustomSearchView.selectionMonths:
+                mLoaderID = MONTHS_LOADER_ID;
+                break;
+            case CustomSearchView.selectionCountries:
+                mLoaderID = COUNTRIES_LOADER_ID;
+                break;
+        }
+
+        getSupportLoaderManager().restartLoader(mLoaderID,
+                null, DBCustomSearchViewActivity.this);
     }
 
     /**
@@ -223,7 +298,7 @@ public class CustomSearchViewActivity extends AppCompatActivity
         mRecyclerView.setNestedScrollingEnabled(false);
 
         // specify an adapter
-        mAdapter = new SearchRecyclerViewAdapter(this, getData());
+        mAdapter = new DBSearchRecyclerViewAdapter(this, getData());
 
         // set recyclerView adapter
         mRecyclerView.setAdapter(mAdapter);
@@ -243,13 +318,13 @@ public class CustomSearchViewActivity extends AppCompatActivity
     private void showCustomSearchView() {
         // Show Custom SearchView
         mCustomSearchView.showCustomSearchView(
-                CustomSearchViewActivity.this,
-                CustomSearchViewActivity.this,
+                DBCustomSearchViewActivity.this,
+                DBCustomSearchViewActivity.this,
                 mParent,
                 getQuery());
 
         // set callbacks
-        mCustomSearchView.setSearchItemCallbacks(CustomSearchViewActivity.this);
+        mCustomSearchView.setSearchItemCallbacks(DBCustomSearchViewActivity.this);
     }
 
     /**
@@ -267,87 +342,17 @@ public class CustomSearchViewActivity extends AppCompatActivity
     }
 
     /**
-     * Sets data based on Custom SearchView selection
-     */
-    private void setData() {
-
-        String[] stringArray;
-
-        switch (mCustomSearchView.getSelection()) {
-            case CustomSearchView.selectionDays:
-                stringArray = getResources().getStringArray(R.array.days);
-                break;
-            case CustomSearchView.selectionMonths:
-                stringArray = getResources().getStringArray(R.array.months);
-                break;
-            case CustomSearchView.selectionCountries:
-            default:
-                stringArray = getResources().getStringArray(R.array.countries);
-                break;
-        }
-
-        setData(new ArrayList<>(Arrays.asList(stringArray)));
-    }
-
-    /**
      * @param data current selected data
      */
-    private void setData(ArrayList<String> data) {
+    private void setData(Cursor data) {
         this.mData = data;
     }
 
     /**
      * @return current selected data
      */
-    private ArrayList<String> getData() {
+    private Cursor getData() {
         return mData;
-    }
-
-    /**
-     * @param mSearchResults current search results data
-     */
-    private void setSearchResults(ArrayList<String> mSearchResults) {
-        this.mSearchResults = mSearchResults;
-    }
-
-    /**
-     * @return current search results data
-     */
-    private ArrayList<String> getSearchResults() {
-        return mSearchResults;
-    }
-
-    /**
-     * @param query current search query
-     */
-    private void setSearchResultsByQuery(String query) {
-
-        setData();
-
-        if (getData() != null && getData().size() > 0) {
-
-            // reset results data
-            setSearchResults(new ArrayList<String>());
-
-            if (!TextUtils.isEmpty(query)) {
-
-                for (int i = 0; i < getData().size(); i++) {
-                    // notice that is checking contains and toLowerCased
-                    if (getData().get(i).toLowerCase().contains(query.toLowerCase())) {
-                        String data = getData().get(i);
-                        getSearchResults().add(data);
-                    }
-                }
-
-            } else {
-                // set all data since query is empty
-                setSearchResults(getData());
-            }
-        } else {
-            Toast.makeText(CustomSearchViewActivity.this, R.string.no_data,
-                    Toast.LENGTH_SHORT).show();
-        }
-
     }
 
 }

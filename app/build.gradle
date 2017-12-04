@@ -21,6 +21,7 @@ android {
 ext {
     androidSupportVersion = '27.0.2'
     constraintLayoutVersion = '1.0.2'
+    butterknifeVersion = '8.8.1'
 }
 
 dependencies {
@@ -34,4 +35,7 @@ dependencies {
     compile "com.android.support:cardview-v7:$androidSupportVersion"
     compile "com.android.support:design:$androidSupportVersion"
     compile "com.android.support.constraint:constraint-layout:$constraintLayoutVersion"
+
+    compile "com.jakewharton:butterknife:$butterknifeVersion"
+    annotationProcessor "com.jakewharton:butterknife-compiler:$butterknifeVersion"
 }

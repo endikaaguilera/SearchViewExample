@@ -30,6 +30,13 @@
             android:layout_marginTop="20dp"
             android:text="@string/custom_search" />
 
+        <Button
+            android:id="@+id/db_custom_search_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/db_custom_search" />
+
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

@@ -2,11 +2,16 @@
     <string name="app_name">Search View Example</string>
     <string name="days">Days</string>
     <string name="months">Months</string>
+    <string name="db_custom_search">DB Custom Search</string>
     <string name="custom_search">Custom Search</string>
     <string name="simple_search">Simple Search</string>
     <string name="countries">Countries</string>
     <string name="query_hint">Type your keyword here</string>
     <string name="no_data">No available data!</string>
+
+    <!-- - - - db provider authority - - - -->
+    <string name="content_authority" translatable="false">com.thisobeystudio.searchviewexample</string>
+    <!-- - - - - - - - - - - - - - - -->
 
     <array name="days">
         <item>Monday</item>
