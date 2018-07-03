@@ -5,4 +5,4 @@ Android Custom Search View Example
 Work in progress...
 
 # Screen
-![screen](../master/art/Screenshot_01.png)
+![screen](https://raw.githubusercontent.com/endikaaguilera/myreposassets/master/search_view_example/Screenshot_01.png)
